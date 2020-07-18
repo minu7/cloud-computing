@@ -17,8 +17,14 @@ from pyspark.context import SparkContext
 from pyspark.sql.session import SparkSession
 from pyspark.sql.types import *
 from pyspark.sql.functions import *
+from pyspark.sql import functions as F
 import json
 sc = SparkContext('local')
+
+logger = sc._jvm.org.apache.log4j
+logger.LogManager.getLogger("org"). setLevel( logger.Level.ERROR )
+logger.LogManager.getLogger("akka").setLevel( logger.Level.ERROR )
+
 spark = SparkSession(sc)
 schema = StructType([ StructField("value", FloatType(), True), StructField("time", TimestampType(), True), ])
 
@@ -32,19 +38,17 @@ spark \
   .selectExpr("CAST(value AS STRING) as json", "CAST(timestamp AS TIMESTAMP) as timestamp") \
   .select('*', from_json(col("json"), schema).alias("parsed")) \
   .select('parsed.value', 'parsed.time') \
-  .withWatermark("time", "400 minutes") \
-  .groupBy(window('time', '1 minutes')) \
-  .count() \
-  .writeStream.outputMode("Append").format("console").start().awaitTermination()
+  .withWatermark("time", "1 seconds") \
+  .groupBy(window('time', '1 minute')) \
+  .agg(F.max('value').alias('max'), F.min('value').alias('min'), F.first('value').alias('first'), F.last('value').alias('last'), F.avg('value').alias('avg')) \
+  .select(to_json(struct("max", "min", "avg", "first", "last", "window")).alias("value")) \
+  .writeStream \
+  .outputMode("Append") \
+  .format("kafka") \
+  .option("kafka.bootstrap.servers", "kafka:9092") \
+  .option("topic", "bitcoin_candlestick") \
+  .option("checkpointLocation", "/tmp/vaquarkhan/checkpoint") \
+  .start() \
+  .awaitTermination()
 
-
-
-
-#   .writeStream \
-#   .format("kafka") \
-#   .option("kafka.bootstrap.servers", "kafka:9092") \
-#   .option("topic", "bitcoin_res") \
-#   .option("checkpointLocation", "/tmp/vaquarkhan/checkpoint") \
-#   .trigger(continuous="25 second") \
-#   .start() \
-#   .awaitTermination()
+#  .writeStream.outputMode("Append").format("console").start().awaitTermination()
