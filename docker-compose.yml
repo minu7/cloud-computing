@@ -35,7 +35,8 @@ services:
 
 
   spark:
-    image: docker.io/bitnami/spark:3-debian-10
+    build: ./spark 
+    # image: docker.io/bitnami/spark:3-debian-10
     environment:
       - SPARK_MODE=master
       - SPARK_RPC_AUTHENTICATION_ENABLED=no
@@ -50,6 +51,7 @@ services:
     volumes:
       - ./spark:/opt/bitnami/spark/candlestick
     command: 'bin/spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.0 candlestick/main.py kafka:9092 bitcoin'
+ 
   # spark-worker-1:
   #   build: ./spark-regression
   #   environment:
@@ -107,16 +109,32 @@ services:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: password
 
-  # consumer:
-  #   container_name: consumer
-  #   image: 'node:12'
-  #   volumes:
-  #     - ./consumer:/home/task
-  #   working_dir: /home/task
-  #   command: node index.js
-  #   restart: on-failure
-  #   depends_on:
-  #     - kafka
+  frontend:
+    container_name: frontend
+    image: 'node:12'
+    ports:
+      - 80:80
+    volumes:
+      - ./frontend:/home/task
+    working_dir: /home/task
+    command: node index.js
+    restart: on-failure
+    depends_on:
+      - kafka
+
+  backend:
+    container_name: backend
+    build: ./backend
+    volumes:
+      - ./backend:/home/task
+    working_dir: /home/task
+    command: python -u api/main.py
+    restart: on-failure
+    environment:
+      - PYTHONUNBUFFERED=0
+    depends_on:
+      - kafka
+      - mongo
 
 
 

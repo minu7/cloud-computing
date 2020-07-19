@@ -1,18 +1,3 @@
-# import sys
-# from pyspark.streaming import StreamingContext
-# from pyspark.streaming.kafka import KafkaUtils
-# from pyspark import SparkContext
-# if __name__ == "__main__":
-#     sc = SparkContext(appName="PythonStreamingDirect")
-#     ssc = StreamingContext(sc, 2)
-#     brokers, topic = sys.argv[1:]
-#     kvs = KafkaUtils.createDirectStream(
-#         ssc, [topic], {"metadata.broker.list": brokers})
-#     lines = kvs.map(lambda x: x[1])
-
-#     lines.pprint()
-#     ssc.start()
-#     ssc.awaitTermination()
 from pyspark.context import SparkContext
 from pyspark.sql.session import SparkSession
 from pyspark.sql.types import *

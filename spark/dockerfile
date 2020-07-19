@@ -1,0 +1,6 @@
+FROM docker.io/bitnami/spark:3-debian-10
+USER root
+
+ADD . /opt/bitnami/spark/candlestick
+
+RUN bin/spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.0 candlestick/test.py kafka:9092 bitcoin 

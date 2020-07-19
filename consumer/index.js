@@ -4,24 +4,28 @@ const MongoClient = require('mongodb').MongoClient;
 const uri = "mongodb://root:password@mongo/admin?retryWrites=true&w=majority";
 const mongo = new MongoClient(uri, { useNewUrlParser: true });
 
-function start() {
-  const Consumer = kafka.Consumer;
-  const client = new kafka.KafkaClient({ kafkaHost: 'kafka:9092' });
+const Consumer = kafka.Consumer;
+const client = new kafka.KafkaClient({ kafkaHost: 'kafka:9092' });
+client.createTopics([{ topic: 'bitcoin_candlestick',  partitions: 1, replicationFactor: 1 }], (err) => {
+  if (err) {
+    throw err;
+  }
   const consumer = new Consumer(
-      client,
-        [
-          { topic: 'bitcoin_candlestick' }
-        ],
-      {
-          autoCommit: true,
-          fromOffset: "earliest"
-      }
-    );
-  
+    client,
+      [
+        { topic: 'bitcoin_candlestick' }
+      ],
+    {
+        autoCommit: true,
+        fromOffset: "earliest"
+    }
+  );
+
   mongo.connect(err => {
     if (err) {
       throw err;
     }
+
     signale.debug("listening on topic bitcoin_candlestick");
     const candlesticks = mongo.db("admin").collection("candlesticks");
     consumer.on('message', (message) => {
@@ -33,6 +37,4 @@ function start() {
       });
     });
   });
-}
-
-setTimeout(start, 15000);
+});
