@@ -134,6 +134,7 @@ services:
       - PYTHONUNBUFFERED=0
     depends_on:
       - kafka
+      - frontend
       - mongo
 
 

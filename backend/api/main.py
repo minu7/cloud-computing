@@ -27,7 +27,15 @@ consumer = KafkaConsumer(
 
 for msg in consumer:
     print(msg.value)
-    documents = candlesticks.find({}, sort=[( '_id', pymongo.DESCENDING )])
-    documents = [d for d in documents]
-    msg.value["documents"] = dumps(documents) 
+
+    if msg.value['type'] == 'get':
+        documents = candlesticks.find({}, sort=[( '_id', pymongo.DESCENDING )])
+        documents = [d for d in documents]
+        msg.value["documents"] = dumps(documents) 
+    
+    if msg.value['type'] == 'max':
+        documents = candlesticks.find({}, sort=[( 'max', pymongo.DESCENDING )], limit=1)
+        documents = [d for d in documents]
+        msg.value["documents"] = dumps(documents) 
+    
     print(producer.send('response', value=msg.value).get(timeout=30))

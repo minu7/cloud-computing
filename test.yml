@@ -1,0 +1,9 @@
+config:
+  target: 'http://localhost'
+  phases:
+    - duration: 15
+      arrivalRate: 20
+scenarios:
+  - flow:
+    - get:
+        url: "/bitcoin"
